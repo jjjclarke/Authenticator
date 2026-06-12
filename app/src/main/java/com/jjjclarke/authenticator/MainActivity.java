@@ -26,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     Runnable updateTotpRunnable;
     TextView textView;
 
+    private AccountDatabase db;
+
     private String decryptedSecret;
 
     @Override
@@ -42,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         textView = findViewById(R.id.textView);
+
+        db = AccountDatabase.getInstance(this);
 
         try {
             KeystoreManager.init();
