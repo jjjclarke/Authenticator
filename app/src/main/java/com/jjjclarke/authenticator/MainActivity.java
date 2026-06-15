@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
 
-        ImageButton button = findViewById(R.id.imageButton);
+        Button button = findViewById(R.id.btnPlus);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
