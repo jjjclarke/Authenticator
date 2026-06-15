@@ -3,35 +3,33 @@ package com.jjjclarke.authenticator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
-    Handler handler = new Handler(Looper.getMainLooper());
-    Runnable updateTotpRunnable;
     private AccountDatabase db;
-    private List<Account> accountList;
+    private final List<Account> accountList = new ArrayList<>();
+
     private AccountAdapter adapter;
 
-    private String decryptedSecret;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable updateTotpRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +49,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "KeystoreManager Fault", Toast.LENGTH_SHORT).show();
         }
 
-        accountList = new ArrayList<>();
-
-        ListView listView = (ListView) findViewById(R.id.ListView);
+        ListView listView = findViewById(R.id.ListView);
         adapter = new AccountAdapter(this, accountList);
         listView.setAdapter(adapter);
 
@@ -66,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
 
-        ImageButton button = (ImageButton) findViewById(R.id.imageButton);
+        ImageButton button = findViewById(R.id.imageButton);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -94,13 +90,12 @@ public class MainActivity extends AppCompatActivity {
                                         db.accountDao().insert(account);
 
                                         runOnUiThread(() -> {
-                                            decryptedSecret = newSecret;
                                             Toast.makeText(MainActivity.this, "Secret saved", Toast.LENGTH_SHORT).show();
                                         });
                                     }).start();
                                 } catch (Exception e) {
                                     Toast.makeText(MainActivity.this, "Error processing key storage", Toast.LENGTH_SHORT).show();
-                                    e.printStackTrace();
+                                    Log.e("a", Objects.requireNonNull(e.getMessage()));
                                 }
                             }
                         })
