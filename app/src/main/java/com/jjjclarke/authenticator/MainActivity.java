@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,13 +21,15 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     Handler handler = new Handler(Looper.getMainLooper());
     Runnable updateTotpRunnable;
-    TextView textView;
-
     private AccountDatabase db;
+    private List<Account> accountList;
+    private AccountAdapter adapter;
 
     private String decryptedSecret;
 
@@ -35,23 +38,33 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(toolbar);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        textView = findViewById(R.id.textView);
-
         db = AccountDatabase.getInstance(this);
-
         try {
             KeystoreManager.init();
         } catch (Exception e) {
             Toast.makeText(this, "KeystoreManager Fault", Toast.LENGTH_SHORT).show();
         }
+
+        accountList = new ArrayList<>();
+
+        ListView listView = (ListView) findViewById(R.id.ListView);
+        adapter = new AccountAdapter(this, accountList);
+        listView.setAdapter(adapter);
+
+        new Thread(() -> {
+            List<Account> accounts = db.accountDao().getAll();
+            runOnUiThread(() -> {
+                accountList.clear();
+                accountList.addAll(accounts);
+                adapter.notifyDataSetChanged();
+            });
+        }).start();
 
         ImageButton button = (ImageButton) findViewById(R.id.imageButton);
         button.setOnClickListener(new View.OnClickListener() {
@@ -70,13 +83,24 @@ public class MainActivity extends AppCompatActivity {
                             String newSecret = input.getText().toString().trim().toUpperCase();
                             if (!newSecret.isEmpty()) {
                                 try {
-                                    // Re-run through Keystore if you want it protected
-                                    String protectedSecret = KeystoreManager.encryptSecret(newSecret);
-                                    decryptedSecret = KeystoreManager.decryptSecret(protectedSecret);
+                                    String secret = KeystoreManager.encryptSecret(newSecret);
 
-                                    Toast.makeText(MainActivity.this, "Secret updated", Toast.LENGTH_SHORT).show();
+                                    Account account = new Account();
+                                    account.username = "Temporary";
+                                    account.serviceProvider = "Temporary";
+                                    account.blob = secret;
+
+                                    new Thread(() -> {
+                                        db.accountDao().insert(account);
+
+                                        runOnUiThread(() -> {
+                                            decryptedSecret = newSecret;
+                                            Toast.makeText(MainActivity.this, "Secret saved", Toast.LENGTH_SHORT).show();
+                                        });
+                                    }).start();
                                 } catch (Exception e) {
-                                    Toast.makeText(MainActivity.this, "Error processing key", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, "Error processing key storage", Toast.LENGTH_SHORT).show();
+                                    e.printStackTrace();
                                 }
                             }
                         })
@@ -88,18 +112,9 @@ public class MainActivity extends AppCompatActivity {
         updateTotpRunnable = new Runnable() {
             @Override
             public void run() {
-                try {
-                    if (decryptedSecret != null) {
-                        String code = TotpGenerator.generateTotp(decryptedSecret);
-                        textView.setText(code);
-                    }
-                } catch (NoSuchAlgorithmException e) {
-                    Toast.makeText(MainActivity.this, "NoSuchAlgorithmException", Toast.LENGTH_SHORT).show();
-                } catch (InvalidKeyException e) {
-                    Toast.makeText(MainActivity.this, "InvalidKeyException", Toast.LENGTH_SHORT).show();
-                }
+                adapter.notifyDataSetChanged();
 
-                handler.postDelayed(this, 2 * 1000);
+                handler.postDelayed(this, 1000);
             }
         };
     }

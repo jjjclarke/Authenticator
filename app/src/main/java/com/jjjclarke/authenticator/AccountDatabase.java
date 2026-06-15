@@ -6,8 +6,6 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-// TODO: Enforce Singleton pattern rules here.
-
 @Database(entities = {Account.class}, version = 1)
 public abstract class AccountDatabase extends RoomDatabase {
     public abstract AccountDao accountDao();
