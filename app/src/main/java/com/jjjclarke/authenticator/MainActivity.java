@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,7 +111,31 @@ public class MainActivity extends AppCompatActivity {
             result -> {
                 if (result.getContents() != null) {
                     String rawUri = result.getContents();
-                    // TODO: parse
+
+                    try {
+                        OtpAuthUri parsed = OtpAuthUri.parse(rawUri);
+                        // create account
+                        Account account = new Account();
+
+                        account.username = parsed.getUsername();
+                        account.serviceProvider = parsed.getServiceProvider();
+                        account.blob = KeystoreManager.encryptSecret(parsed.getSecret());
+                        account.algorithm = parsed.getAlgorithm();
+                        account.digits = parsed.getDigits();
+                        account.period = parsed.getPeriod();
+
+                        new Thread(() -> {
+                            db.accountDao().insert(account);
+                            runOnUiThread(() -> {
+                                accountList.add(account);
+                                adapter.notifyDataSetChanged();
+                            });
+                        }).start();
+                    } catch (InvalidParameterException e) {
+                        Toast.makeText(this, "Invalid QR Code", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this, "Fault", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
     );
