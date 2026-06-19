@@ -1,5 +1,7 @@
 package com.jjjclarke.authenticator;
 
+import android.app.AlertDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -45,6 +47,12 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        SharedPreferences sp = getSharedPreferences("prefs", MODE_PRIVATE);
+        boolean firstTime = sp.getBoolean("firstStartup", true);
+        if (firstTime) {
+            showWarningDialog();
+        }
 
         db = AccountDatabase.getInstance(this);
         try {
@@ -141,4 +149,17 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
     );
+
+    private void showWarningDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.warning_title)
+                .setMessage(R.string.warning_msg)
+                .setPositiveButton(R.string.btn_ok, (dialog, which) -> {
+                    SharedPreferences sp = getSharedPreferences("prefs", MODE_PRIVATE);
+                    sp.edit().putBoolean("firstStartup", false).apply();
+                    dialog.dismiss();
+                })
+                .setCancelable(false)
+                .show();
+    }
 }
