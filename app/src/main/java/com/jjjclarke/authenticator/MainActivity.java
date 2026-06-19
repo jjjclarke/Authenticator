@@ -117,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
                         // create account
                         Account account = new Account();
 
+                        account.type = parsed.getType();
+                        account.path = parsed.getPath();
                         account.username = parsed.getUsername();
                         account.serviceProvider = parsed.getServiceProvider();
                         account.blob = KeystoreManager.encryptSecret(parsed.getSecret());

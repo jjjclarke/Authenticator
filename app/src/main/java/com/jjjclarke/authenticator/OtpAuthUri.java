@@ -1,7 +1,11 @@
 package com.jjjclarke.authenticator;
 
-import android.net.Uri;
+import android.annotation.SuppressLint;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+
+@SuppressLint("NewApi") // TODO: FIX THIS!!!!
 public class OtpAuthUri {
     private String type;
     private String path;
@@ -14,100 +18,119 @@ public class OtpAuthUri {
 
     public OtpAuthUri() {}
 
-    public static OtpAuthUri parse(String authuri) throws IllegalArgumentException {
-        Uri uri = Uri.parse(authuri);
-        if (!"otpauth".equals(uri.getScheme())) {
-            throw new IllegalArgumentException("Not an otpauth:// URI");
+    public static OtpAuthUri parse(String authuri) {
+        OtpAuthUri output = new OtpAuthUri();
+
+        if (authuri == null || !authuri.startsWith("otpauth://"))
+            throw new IllegalArgumentException("Invalid otpauth:// URI");
+
+        String rest = authuri.substring("otpauth://".length());
+
+        int slashAfterType = rest.indexOf('/');
+        if (slashAfterType == -1)
+            throw new IllegalArgumentException("Missing path in URI");
+        String sType = rest.substring(0, slashAfterType).toLowerCase();
+        if (sType.equals("totp"))
+            output.type = "TOTP";
+        else if (sType.equals("hotp"))
+            output.type = "HOTP";
+        else
+            throw new IllegalArgumentException("Unknown OTP type");
+
+        String afterType = rest.substring(slashAfterType + 1);
+        int queryStart = afterType.indexOf('?');
+        String rawPath = queryStart != -1 ? afterType.substring(0, queryStart) : afterType;
+        String query = queryStart != -1 ? afterType.substring(queryStart + 1) : "";
+
+        String path = URLDecoder.decode(rawPath, StandardCharsets.UTF_8);
+        output.path = path;
+
+        String service = "";
+        String username;
+
+        int colinIdx = path.indexOf(':');
+        if (colinIdx != -1) {
+            service = path.substring(0, colinIdx).trim();
+            username = path.substring(colinIdx + 1).trim();
+        } else
+            username = path.trim();
+
+        String sk = "";
+        String algo = "SHA1"; // default
+        int digits = 6; // default
+        int period = 30; // default
+
+        if (!query.isEmpty()) {
+            for (String param : query.split("&")) {
+                int eq = param.indexOf('=');
+                if (eq == -1)
+                    continue;
+                String key = param.substring(0, eq).toLowerCase();
+                String value = java.net.URLDecoder.decode(
+                        param.substring(eq + 1), StandardCharsets.UTF_8);
+                        switch (key) {
+                            case "secret":
+                                sk = value;
+                                break;
+                            case "algorithm":
+                                algo = value;
+                                break;
+                            case "issuer":
+                                if (service.isEmpty())
+                                    service = value;
+                                break;
+                            case "digits":
+                                digits = Integer.parseInt(value);
+                                break;
+                            case "period":
+                                period = Integer.parseInt(value);
+                                break;
+                        }
+            }
         }
 
-        OtpAuthUri result = new OtpAuthUri();
-        result.type = uri.getHost();
+        if (sk.isEmpty())
+            throw new IllegalArgumentException("Missing required parameter");
 
-        String path = uri.getPath();
-        // getPath() returns "/Label" so this is some magic
-        result.path = path != null && path.length() > 1 ? Uri.decode(path.substring(1)) : "";
+        output.serviceProvider = service;
+        output.username = username;
+        output.secret = sk;
+        output.algorithm = algo;
+        output.digits = digits;
+        output.period = period;
 
-        result.secret = uri.getQueryParameter("secret");
-        if (result.secret == null || result.secret.isEmpty()) {
-            throw new IllegalArgumentException("Missing secret parameter");
-        }
-
-        result.serviceProvider = uri.getQueryParameter("issuer");
-
-        String algParam = uri.getQueryParameter("algorithm");
-        if (algParam != null)
-            result.algorithm = algParam.toUpperCase();
-        String digitsParam = uri.getQueryParameter("digits");
-        if (digitsParam != null)
-            result.digits = Integer.parseInt(digitsParam);
-        String periodParam = uri.getQueryParameter("period");
-        if (periodParam != null)
-            result.period = Integer.parseInt(periodParam);
-
-        return result;
+        return output;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public String getPath() {
         return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getSecret() {
         return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
     }
 
     public String getServiceProvider() {
         return serviceProvider;
     }
 
-    public void setServiceProvider(String serviceProvider) {
-        this.serviceProvider = serviceProvider;
-    }
-
     public String getAlgorithm() {
         return algorithm;
-    }
-
-    public void setAlgorithm(String algorithm) {
-        this.algorithm = algorithm;
     }
 
     public int getDigits() {
         return digits;
     }
 
-    public void setDigits(int digits) {
-        this.digits = digits;
-    }
-
     public int getPeriod() {
         return period;
-    }
-
-    public void setPeriod(int period) {
-        this.period = period;
     }
 }
