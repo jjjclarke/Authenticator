@@ -2,10 +2,11 @@ package com.jjjclarke.authenticator;
 
 import android.annotation.SuppressLint;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-@SuppressLint("NewApi") // TODO: FIX THIS!!!!
+
 public class OtpAuthUri {
     private String type;
     private String path;
@@ -18,7 +19,7 @@ public class OtpAuthUri {
 
     public OtpAuthUri() {}
 
-    public static OtpAuthUri parse(String authuri) {
+    public static OtpAuthUri parse(String authuri) throws Exception {
         OtpAuthUri output = new OtpAuthUri();
 
         if (authuri == null || !authuri.startsWith("otpauth://"))
@@ -42,7 +43,7 @@ public class OtpAuthUri {
         String rawPath = queryStart != -1 ? afterType.substring(0, queryStart) : afterType;
         String query = queryStart != -1 ? afterType.substring(queryStart + 1) : "";
 
-        String path = URLDecoder.decode(rawPath, StandardCharsets.UTF_8);
+        String path = URLDecoder.decode(rawPath, "UTF-8");
         output.path = path;
 
         String service = "";
@@ -67,7 +68,7 @@ public class OtpAuthUri {
                     continue;
                 String key = param.substring(0, eq).toLowerCase();
                 String value = java.net.URLDecoder.decode(
-                        param.substring(eq + 1), StandardCharsets.UTF_8);
+                        param.substring(eq + 1), "UTF-8");
                         switch (key) {
                             case "secret":
                                 sk = value;
