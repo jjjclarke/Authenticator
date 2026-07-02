@@ -1,6 +1,7 @@
 package com.jjjclarke.authenticator;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -8,6 +9,8 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -22,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
+import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +87,62 @@ public class MainActivity extends AppCompatActivity {
                 options.setBeepEnabled(true);
                 options.setOrientationLocked(true);
                 qrCodeLauncher.launch(options);
+            }
+        });
+        button.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                Context ctx = MainActivity.this;
+                LinearLayout layout = new LinearLayout(ctx);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                final EditText pInput = new EditText(MainActivity.this);
+                pInput.setHint("Enter Provider");
+
+                final EditText aInput = new EditText(MainActivity.this);
+                aInput.setHint("Enter Username");
+
+                final EditText skInput = new EditText(MainActivity.this);
+                skInput.setHint("Enter Secret Key");
+
+                layout.addView(pInput);
+                layout.addView(aInput);
+                layout.addView(skInput);
+
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Add Account")
+                        .setMessage("Enter your account details below.")
+                        .setView(layout)
+                        .setPositiveButton("Save", (dialog, which) -> {
+                            String sk = skInput.getText().toString().trim().toUpperCase();
+
+                            if (!sk.isEmpty()) {
+                                try {
+                                    Account account = new Account();
+                                    account.type = "TOTP";
+                                    account.path = "";
+                                    account.username = String.valueOf(aInput.getText());
+                                    account.serviceProvider = String.valueOf(pInput.getText());
+                                    account.blob = KeystoreManager.encryptSecret(sk);
+                                    account.algorithm = "SHA1";
+                                    account.digits = 6;
+                                    account.period = 3;
+
+                                    new Thread(() -> {
+                                        db.accountDao().insert(account);
+                                        runOnUiThread(() -> {
+                                            accountList.add(account);
+                                            adapter.notifyDataSetChanged();
+                                        });
+                                    }).start();
+                                } catch (Exception e) {
+                                    Toast.makeText(MainActivity.this, "Something went wrong.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                return true;
             }
         });
 
