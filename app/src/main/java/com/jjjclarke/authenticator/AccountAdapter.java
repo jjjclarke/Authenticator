@@ -33,7 +33,7 @@ public class AccountAdapter extends ArrayAdapter<Account> {
             String secret = KeystoreManager.decryptSecret(account.secret);
             totpView.setText(TotpGenerator.generateTotp(secret));
         } catch (Exception e) {
-            totpView.setText("Error");
+            totpView.setText(R.string.account_error);
         }
 
         return convertView;

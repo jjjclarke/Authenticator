@@ -4,4 +4,6 @@
     <string name="warning_title">Security Warning</string>
     <string name="warning_msg">This authenticator app is an exploratory project. It does not include real-world functionality like backups or cloud sync. It should NOT be used in a production environment.</string>
     <string name="btn_ok">OK</string>
+    <string name="app_title">Authenticator</string>
+    <string name="account_error">Error</string>
 </resources>
