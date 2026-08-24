@@ -16,6 +16,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
@@ -36,19 +37,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-//        SharedPreferences sp = getSharedPreferences("prefs", MODE_PRIVATE);
-//        boolean firstTime = sp.getBoolean("firstStartup", true);
-//        if (firstTime) {
-//            showWarningDialog();
-//        }
 
         db = AccountDatabase.getInstance(this);
 
@@ -71,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
 
-        Button button = findViewById(R.id.btnPlus);
+        FloatingActionButton button = findViewById(R.id.floatingActionButton);
         button.setOnClickListener(v -> {
             ScanOptions options = new ScanOptions();
             options.setPrompt("Scan a OTPAuth QR code:");
@@ -79,63 +72,6 @@ public class MainActivity extends AppCompatActivity {
             options.setOrientationLocked(true);
             qrCodeLauncher.launch(options);
         });
-
-//        button.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                Context ctx = MainActivity.this;
-//                LinearLayout layout = new LinearLayout(ctx);
-//                layout.setOrientation(LinearLayout.VERTICAL);
-//
-//                final EditText pInput = new EditText(MainActivity.this);
-//                pInput.setHint("Enter Provider");
-//
-//                final EditText aInput = new EditText(MainActivity.this);
-//                aInput.setHint("Enter Username");
-//
-//                final EditText skInput = new EditText(MainActivity.this);
-//                skInput.setHint("Enter Secret Key");
-//
-//                layout.addView(pInput);
-//                layout.addView(aInput);
-//                layout.addView(skInput);
-//
-//                new AlertDialog.Builder(MainActivity.this)
-//                        .setTitle("Add Account")
-//                        .setMessage("Enter your account details below.")
-//                        .setView(layout)
-//                        .setPositiveButton("Save", (dialog, which) -> {
-//                            String sk = skInput.getText().toString().trim().toUpperCase();
-//
-//                            if (!sk.isEmpty()) {
-//                                try {
-//                                    Account account = new Account();
-//                                    account.type = "TOTP";
-//                                    account.path = "";
-//                                    account.username = String.valueOf(aInput.getText());
-//                                    account.serviceProvider = String.valueOf(pInput.getText());
-//                                    account.blob = KeystoreManager.encryptSecret(sk);
-//                                    account.algorithm = "SHA1";
-//                                    account.digits = 6;
-//                                    account.period = 3;
-//
-//                                    new Thread(() -> {
-//                                        db.accountDao().insert(account);
-//                                        runOnUiThread(() -> {
-//                                            accountList.add(account);
-//                                            adapter.notifyDataSetChanged();
-//                                        });
-//                                    }).start();
-//                                } catch (Exception e) {
-//                                    Toast.makeText(MainActivity.this, "Something went wrong.", Toast.LENGTH_SHORT).show();
-//                                }
-//                            }
-//                        })
-//                        .setNegativeButton("Cancel", null)
-//                        .show();
-//                return true;
-//            }
-//        });
 
         updateTotpRunnable = new Runnable() {
             @Override
@@ -145,12 +81,6 @@ public class MainActivity extends AppCompatActivity {
                 handler.postDelayed(this, 1000);
             }
         };
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
     }
 
     @Override
@@ -185,15 +115,6 @@ public class MainActivity extends AppCompatActivity {
                         account.counter = parsed.getCounter();
                         account.period = parsed.getPeriod();
 
-//                        account.type = parsed.getType();
-//                        account.path = parsed.getPath();
-//                        account.username = parsed.getUsername();
-//                        account.serviceProvider = parsed.getServiceProvider();
-//                        account.blob = KeystoreManager.encryptSecret(parsed.getSecret());
-//                        account.algorithm = parsed.getAlgorithm();
-//                        account.digits = parsed.getDigits();
-//                        account.period = parsed.getPeriod();
-
                         new Thread(() -> {
                             db.accountDao().insert(account);
                             runOnUiThread(() -> {
@@ -210,17 +131,4 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
     );
-
-//    private void showWarningDialog() {
-//        new AlertDialog.Builder(this)
-//                .setTitle(R.string.warning_title)
-//                .setMessage(R.string.warning_msg)
-//                .setPositiveButton(R.string.btn_ok, (dialog, which) -> {
-//                    SharedPreferences sp = getSharedPreferences("prefs", MODE_PRIVATE);
-//                    sp.edit().putBoolean("firstStartup", false).apply();
-//                    dialog.dismiss();
-//                })
-//                .setCancelable(false)
-//                .show();
-//    }
 }
