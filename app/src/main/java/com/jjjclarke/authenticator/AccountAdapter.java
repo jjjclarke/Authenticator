@@ -25,12 +25,12 @@ public class AccountAdapter extends ArrayAdapter<Account> {
         if (convertView == null)
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_account, parent, false);
 
-        ((TextView) convertView.findViewById(R.id.textServiceProvider)).setText(account.serviceProvider);
-        ((TextView) convertView.findViewById(R.id.textUsername)).setText(account.username);
+        ((TextView) convertView.findViewById(R.id.textServiceProvider)).setText(account.issuer);
+        ((TextView) convertView.findViewById(R.id.textUsername)).setText(account.label);
 
         TextView totpView = convertView.findViewById(R.id.textTotp);
         try {
-            String secret = KeystoreManager.decryptSecret(account.blob);
+            String secret = KeystoreManager.decryptSecret(account.secret);
             totpView.setText(TotpGenerator.generateTotp(secret));
         } catch (Exception e) {
             totpView.setText("Error");

@@ -1,20 +1,16 @@
 package com.jjjclarke.authenticator;
 
-import android.annotation.SuppressLint;
-
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-
 
 public class OtpAuthUri {
+
     private String type;
-    private String path;
-    private String username;
-    private String secret; // not a blob, it's unencrypted
-    private String serviceProvider;
+    private String label;
+    private String secret;
+    private String issuer;
     private String algorithm = "SHA1";
     private int digits = 6;
+    private int counter;
     private int period = 30;
 
     public OtpAuthUri() {}
@@ -44,7 +40,7 @@ public class OtpAuthUri {
         String query = queryStart != -1 ? afterType.substring(queryStart + 1) : "";
 
         String path = URLDecoder.decode(rawPath, "UTF-8");
-        output.path = path;
+        output.label = path;
 
         String service = "";
         String username;
@@ -67,6 +63,7 @@ public class OtpAuthUri {
                 if (eq == -1)
                     continue;
                 String key = param.substring(0, eq).toLowerCase();
+                // Changing "UTF-8" to StandardCharsets.xxx breaks this
                 String value = java.net.URLDecoder.decode(
                         param.substring(eq + 1), "UTF-8");
                         switch (key) {
@@ -93,9 +90,9 @@ public class OtpAuthUri {
         if (sk.isEmpty())
             throw new IllegalArgumentException("Missing required parameter");
 
-        output.serviceProvider = service;
-        output.username = username;
+        output.label = username;
         output.secret = sk;
+        output.issuer = service;
         output.algorithm = algo;
         output.digits = digits;
         output.period = period;
@@ -107,20 +104,16 @@ public class OtpAuthUri {
         return type;
     }
 
-    public String getPath() {
-        return path;
-    }
-
-    public String getUsername() {
-        return username;
+    public String getLabel() {
+        return label;
     }
 
     public String getSecret() {
         return secret;
     }
 
-    public String getServiceProvider() {
-        return serviceProvider;
+    public String getIssuer() {
+        return issuer;
     }
 
     public String getAlgorithm() {
@@ -129,6 +122,10 @@ public class OtpAuthUri {
 
     public int getDigits() {
         return digits;
+    }
+
+    public int getCounter() {
+        return counter;
     }
 
     public int getPeriod() {
