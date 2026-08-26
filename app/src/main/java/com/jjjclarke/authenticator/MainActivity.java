@@ -3,15 +3,13 @@ package com.jjjclarke.authenticator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.Menu;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -25,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
     private AccountDatabase db;
     private List<Account> accountList = new ArrayList<>();
     private AccountAdapter adapter;
@@ -55,6 +52,29 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.ListView);
         adapter = new AccountAdapter(this, accountList);
         listView.setAdapter(adapter);
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            Account accountToDelete = adapter.getItem(position);
+            if (accountToDelete == null) {
+                return true;
+            }
+
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.delete_account_title)
+                    .setMessage(R.string.delete_account_message)
+                    .setPositiveButton(R.string.btn_ok, (dialog, which) ->
+                            new Thread(() -> {
+                                db.accountDao().delete(accountToDelete);
+                                runOnUiThread(() -> {
+                                    accountList.remove(accountToDelete);
+                                    adapter.notifyDataSetChanged();
+                                    Toast.makeText(this, R.string.account_deleted, Toast.LENGTH_SHORT).show();
+                                });
+                            }).start()
+                    )
+                    .setNegativeButton(R.string.btn_cancel, null)
+                    .show();
+            return true;
+        });
 
         new Thread(() -> {
             List<Account> accounts = db.accountDao().getAll();
@@ -117,7 +137,8 @@ public class MainActivity extends AppCompatActivity {
                         account.period = parsed.getPeriod();
 
                         new Thread(() -> {
-                            db.accountDao().insert(account);
+                            long accountId = db.accountDao().insert(account);
+                            account.uid = (int) accountId;
                             runOnUiThread(() -> {
                                 accountList.add(account);
                                 adapter.notifyDataSetChanged();
