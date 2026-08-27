@@ -3,6 +3,7 @@ package com.jjjclarke.authenticator;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -15,6 +16,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
@@ -34,10 +36,50 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        setSupportActionBar(findViewById(R.id.toolbar));
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ListView listView = findViewById(R.id.ListView);
+        FloatingActionButton button = findViewById(R.id.floatingActionButton);
+
+        final int toolbarBaseHeight = toolbar.getLayoutParams().height;
+        final int toolbarBaseTopPadding = toolbar.getPaddingTop();
+        final int listBaseBottomPadding = listView.getPaddingBottom();
+
+        ViewGroup.MarginLayoutParams listLayoutParams = (ViewGroup.MarginLayoutParams) listView.getLayoutParams();
+        final int listBaseTopMargin = listLayoutParams.topMargin;
+
+        ViewGroup.MarginLayoutParams buttonLayoutParams = (ViewGroup.MarginLayoutParams) button.getLayoutParams();
+        final int buttonBaseBottomMargin = buttonLayoutParams.bottomMargin;
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+
+            ViewGroup.LayoutParams toolbarLayoutParams = toolbar.getLayoutParams();
+            toolbarLayoutParams.height = toolbarBaseHeight + systemBars.top;
+            toolbar.setLayoutParams(toolbarLayoutParams);
+            toolbar.setPadding(
+                    toolbar.getPaddingLeft(),
+                    toolbarBaseTopPadding + systemBars.top,
+                    toolbar.getPaddingRight(),
+                    toolbar.getPaddingBottom()
+            );
+
+            ViewGroup.MarginLayoutParams updatedListParams = (ViewGroup.MarginLayoutParams) listView.getLayoutParams();
+            updatedListParams.topMargin = listBaseTopMargin + systemBars.top;
+            listView.setLayoutParams(updatedListParams);
+            listView.setPadding(
+                    listView.getPaddingLeft(),
+                    listView.getPaddingTop(),
+                    listView.getPaddingRight(),
+                    listBaseBottomPadding + systemBars.bottom
+            );
+
+            ViewGroup.MarginLayoutParams updatedButtonParams = (ViewGroup.MarginLayoutParams) button.getLayoutParams();
+            updatedButtonParams.bottomMargin = buttonBaseBottomMargin + systemBars.bottom;
+            button.setLayoutParams(updatedButtonParams);
+
             return insets;
         });
 
@@ -49,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "KeystoreManager Fault", Toast.LENGTH_SHORT).show();
         }
 
-        ListView listView = findViewById(R.id.ListView);
         adapter = new AccountAdapter(this, accountList);
         listView.setAdapter(adapter);
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -85,7 +126,6 @@ public class MainActivity extends AppCompatActivity {
             });
         }).start();
 
-        FloatingActionButton button = findViewById(R.id.floatingActionButton);
         button.setOnClickListener(v -> {
             ScanOptions options = new ScanOptions();
             options.setPrompt("Scan a OTPAuth QR code:");

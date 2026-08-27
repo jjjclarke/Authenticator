@@ -3,4 +3,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="light_primary">#347DEB</color>
+    <color name="dark_primary">#0D47A1</color>
 </resources>
