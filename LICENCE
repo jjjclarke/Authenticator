@@ -1,27 +1,3 @@
-# Authenticator
-
-<p align="center">
-	<img src="light_mode_preview.jpeg" alt="Light mode preview" width="300">
-	<img src="dark_mode_preview.jpeg" alt="Dark mode preview" width="300">
-</p>
-
-# Features
-
-This is a TOTP standard authenticator app for valid 2FA codes. You can add an account by scanning the generated QR code for your account service. Secret details are stored securely in an encrypted Room database. Long press an account to delete it.
-
-## Practical Usage
-
-Don't use this in a production environment. It is mostly an experimental project and has no cloud sync or backup and restore functionality. If you lose your device, or if an update (perhaps) breaks database support, your codes are deleted forever.
-
-# Building
-
-To build, use Android Studio, version Quail 3 or newer. This requires an Android device with API level 26 or greater. For the best experience, do not use the Android emulator; test on a real device.
-
-Clone the GitHub repository and open `build.gradle.kts` within Android Studio.
-
-# Licence and other stuff
-
-```
 MIT License
 
 Copyright (c) 2026 James Clarke
@@ -43,4 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-```
