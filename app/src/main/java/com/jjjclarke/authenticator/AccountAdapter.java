@@ -29,11 +29,38 @@ public class AccountAdapter extends ArrayAdapter<Account> {
         ((TextView) convertView.findViewById(R.id.textUsername)).setText(account.label);
 
         TextView totpView = convertView.findViewById(R.id.textTotp);
+        TextView timerView = convertView.findViewById(R.id.textTimer);
+
         try {
             String secret = KeystoreManager.decryptSecret(account.secret);
             totpView.setText(TotpGenerator.generateTotp(secret));
+
+            Runnable existingTimerRunnable = (Runnable) timerView.getTag();
+            if (existingTimerRunnable != null) {
+                timerView.removeCallbacks(existingTimerRunnable);
+            }
+
+            Runnable timerRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        int secondsRemaining = TotpGenerator.getSecondsUntilExpiry(account.period);
+                        timerView.setText(String.valueOf(secondsRemaining));
+                        if (secondsRemaining <= 0) {
+                            totpView.setText(TotpGenerator.generateTotp(secret));
+                        }
+                    } catch (Exception e) {
+                        totpView.setText(R.string.account_error);
+                        timerView.setText("-");
+                    }
+                    timerView.postDelayed(this, 1000L);
+                }
+            };
+            timerView.setTag(timerRunnable);
+            timerView.post(timerRunnable);
         } catch (Exception e) {
             totpView.setText(R.string.account_error);
+            timerView.setText("-");
         }
 
         return convertView;
